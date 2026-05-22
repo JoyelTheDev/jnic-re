@@ -39,7 +39,7 @@ tasks.withType(JavaCompile) {
 }
 
 shadowJar {
-    classifier null
+    archiveClassifier.set(null)
     relocate "picocli", "cc.nuym.depend.picocli"
     relocate "ch.qos", "cc.nuym.depend.qos"
     relocate "com.ctc", "cc.nuym.depend"
