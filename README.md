@@ -1,7 +1,6 @@
 # nuym's jnic
 > New version in development
-
-Open source and performance close to JNIC (excluding Zig performance).
+> Open source and performance close to JNIC (excluding Zig performance).
 
 | Obfuscator                                 | Test#1  | Test#2   | Performance                            | Size  |
 |--------------------------------------------|---------|----------|----------------------------------------|-------|
