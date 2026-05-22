@@ -37,68 +37,8 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-// Debug task to list class files
-task listClassFiles {
-    doLast {
-        def classesDir = file('build/classes/java/main')
-        if (classesDir.exists()) {
-            println "=== Class files ==="
-            fileTree(classesDir).visit { FileVisitDetails details ->
-                if (details.file.name.endsWith('.class')) {
-                    println "Found: ${details.relativePath}"
-                    // Check file size
-                    println "  Size: ${details.file.length()} bytes"
-                }
-            }
-        }
-    }
-}
-
-// Task to check problematic class
-task checkProblematicClass {
-    dependsOn compileJava
-    doLast {
-        def problemFile = file('build/classes/java/main/cc/nuym/jnic/special/ClInitSpecialMethodProcessor.class')
-        if (problemFile.exists()) {
-            println "Problem file exists: ${problemFile.absolutePath}"
-            println "File size: ${problemFile.length()} bytes"
-            
-            // Read first few bytes to check if it's valid
-            def bytes = problemFile.readBytes()
-            println "First 4 bytes: ${bytes[0..<4].collect { String.format("%02X", it) }.join(' ')}"
-            
-            // Check if it's a valid class file (should start with CAFEBABE)
-            if (bytes[0] == 0xCA && bytes[1] == 0xFE && bytes[2] == 0xBA && bytes[3] == 0xBE) {
-                println "File appears to be a valid class file"
-            } else {
-                println "File is NOT a valid class file!"
-            }
-        } else {
-            println "Problem file not found"
-        }
-    }
-}
-
-// Modified shadowJar with debug
 shadowJar {
-    classifier null
-    
-    doFirst {
-        println "Starting shadowJar..."
-        def classesDir = file('build/classes/java/main')
-        if (classesDir.exists()) {
-            println "Classes directory exists"
-            fileTree(classesDir).visit { details ->
-                if (details.file.name.endsWith('.class')) {
-                    println "Will include: ${details.relativePath}"
-                }
-            }
-        }
-    }
-    
-    doLast {
-        println "shadowJar completed"
-    }
+    archiveClassifier.set('')
     
     relocate "picocli", "cc.nuym.depend.picocli"
     relocate "ch.qos", "cc.nuym.depend.qos"
@@ -112,6 +52,7 @@ shadowJar {
     relocate "lombok", "cn.nuym.depend"
     relocate "Class50", "cn.nuym.depend"
     relocate "com.zwitserloot", "cn.nuym.depend"
+    
     exclude 'AUTHORS'
     exclude 'LICENSE'
     exclude 'latestchanges.html'
@@ -120,11 +61,10 @@ shadowJar {
     exclude 'release-timestamp.txt'
 }
 
-jar.manifest.attributes(
-        'Main-Class': 'cc.nuym.jnic.Main'
-)
+jar {
+    manifest {
+        attributes 'Main-Class': 'cc.nuym.jnic.Main'
+    }
+}
 
-build.dependsOn(shadowJar)
-
-// Run these tasks first
-tasks.build.dependsOn(listClassFiles, checkProblematicClass)
+tasks.build.dependsOn tasks.shadowJar
