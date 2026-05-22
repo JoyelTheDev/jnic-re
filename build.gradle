@@ -19,7 +19,7 @@ description = 'Jnic'
 targetCompatibility = sourceCompatibility = JavaVersion.VERSION_1_8
 
 dependencies {
-    //implementation project(':Loader')
+    //implementation project
     implementation 'org.ow2.asm:asm-commons:9.4'
     implementation 'org.ow2.asm:asm-tree:9.4'
 
