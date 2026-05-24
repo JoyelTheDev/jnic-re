@@ -43,6 +43,11 @@ jar {
 
 shadowJar {
     archiveClassifier.set('')
+    // Explicitly set configurations so Shadow does NOT try to include the jar task output.
+    // Without this, Shadow 8.x picks up the existing Jnic-3.6.1.jar as an input source,
+    // then also adds the raw .class files, causing a duplicate/collision crash.
+    configurations = [project.configurations.runtimeClasspath]
+    from sourceSets.main.output
     mergeServiceFiles()
 
     manifest {
