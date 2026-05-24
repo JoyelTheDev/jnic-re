@@ -35,7 +35,13 @@ public class JNICLoader {
                 break;
             }
         }
-        if (osname.contains("nix") || osname.contains("nux") || osname.contains("aix")) {
+        // Android detection (Termux or on-device)
+        boolean isAndroid = new java.io.File("/system/build.prop").exists()
+                || (System.getenv("PREFIX") != null && System.getenv("PREFIX").contains("com.termux"))
+                || osname.contains("android");
+        if (isAndroid) {
+            name = "android.so";
+        } else if (osname.contains("nix") || osname.contains("nux") || osname.contains("aix")) {
             name = "linux.so";
         } else if (osname.contains("win")) {
             name = "windows.dll";
@@ -45,7 +51,11 @@ public class JNICLoader {
         String data = String.format("/dev/jnic/lib/40db034e-902c-4d1b-a58d-b847a6cc845a.dat", JNICLoader.class.getPackage().getName().replace(".", "/"));
 
         String osName = System.getProperty("os.name");
-        if(osName.contains("Linux")&&!arch.contains("arm64")) {
+        // Detect Android/Termux: skip ElFFix entirely (no /usr/lib on Android)
+        boolean isAndroid = new java.io.File("/system/build.prop").exists()
+                || (System.getenv("PREFIX") != null && System.getenv("PREFIX").contains("com.termux"))
+                || System.getProperty("java.io.tmpdir", "").contains("com.termux");
+        if(osName.contains("Linux")&&!arch.contains("arm64") && !isAndroid) {
             String path = "/usr/lib/libc.so";
             boolean isTextFile = false;
             try {
