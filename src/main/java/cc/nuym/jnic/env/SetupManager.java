@@ -16,11 +16,18 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Map;
 
-public class SetupManager
-{
+public class SetupManager {
+
     private static String OS;
-    
+
     public static void init() {
+        // Termux/Android: skip Zig download, use system clang
+        if (isTermux()) {
+            System.out.println("Termux/Android detected. Using system clang for compilation.");
+            System.out.println("Make sure clang is installed: pkg install clang");
+            return;
+        }
+
         final String platformTypeName = getPlatformTypeName();
         String fileName = null;
         String dirName = null;
@@ -28,12 +35,10 @@ public class SetupManager
             if (isLinux()) {
                 fileName = "zig-linux-" + platformTypeName + "-0.9.1.tar.xz";
                 dirName = "zig-linux-" + platformTypeName + "-0.9.1";
-            }
-            else if (isMacOS()) {
+            } else if (isMacOS()) {
                 fileName = "zig-macos-" + platformTypeName + "-0.9.1.tar.xz";
                 dirName = "zig-macos-" + platformTypeName + "-0.9.1";
-            }
-            else if (isWindows()) {
+            } else if (isWindows()) {
                 fileName = "zig-windows-" + platformTypeName + "-0.9.1.zip";
                 dirName = "zig-windows-" + platformTypeName + "-0.9.1";
             }
@@ -42,7 +47,7 @@ public class SetupManager
         }
         System.out.println("This system is not supported. Please contact the developer");
     }
-    
+
     private static String getPlatformTypeName() {
         final String lowerCase;
         final String platform = lowerCase = System.getProperty("os.arch").toLowerCase();
@@ -68,29 +73,59 @@ public class SetupManager
         }
         return platformTypeName;
     }
-    
+
     public static boolean isLinux() {
         return SetupManager.OS.contains("linux");
     }
-    
+
     public static boolean isMacOS() {
         return SetupManager.OS.contains("mac") && SetupManager.OS.indexOf("os") > 0;
     }
-    
+
     public static boolean isWindows() {
         return SetupManager.OS.contains("windows");
     }
-    
+
+    /**
+     * Detects Termux environment on Android.
+     * Termux sets PREFIX=/data/data/com.termux/files/usr
+     * and java.io.tmpdir points into Termux's data directory.
+     */
+    public static boolean isTermux() {
+        String prefix = System.getenv("PREFIX");
+        if (prefix != null && prefix.contains("com.termux")) {
+            return true;
+        }
+        String tmpDir = System.getProperty("java.io.tmpdir", "");
+        if (tmpDir.contains("com.termux")) {
+            return true;
+        }
+        // Android detection fallback
+        if (new File("/system/build.prop").exists()) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns the system clang path on Termux.
+     * Termux installs clang to $PREFIX/bin/clang
+     */
+    public static String getTermuxClangPath() {
+        String prefix = System.getenv("PREFIX");
+        if (prefix == null) prefix = "/data/data/com.termux/files/usr";
+        return prefix + "/bin/clang";
+    }
+
     public static void downloadZigCompiler(final String fileName, final String dirName) {
         if (Files.exists(Paths.get(dirName))) {
-            System.out.println("Found comiler: " + dirName);
+            System.out.println("Found compiler: " + dirName);
             return;
         }
-
         try {
             final String currentDir = System.getProperty("user.dir");
             System.out.println("Downloading cross compilation tool");
-            System.out.println("Download link：https://ziglang.org/download/0.9.1/" + fileName);
+            System.out.println("Download link: https://ziglang.org/download/0.9.1/" + fileName);
             final InputStream in = new URL("https://ziglang.org/download/0.9.1/" + fileName).openStream();
             Files.copy(in, Paths.get(currentDir + File.separator + fileName), StandardCopyOption.REPLACE_EXISTING);
             System.out.println("Download completed, decompressing");
@@ -103,36 +138,32 @@ public class SetupManager
                 ProcessHelper.run(Paths.get(currentDir), 160000L, Arrays.asList("chmod", "777", compilePath2));
                 System.out.println("Successfully set running permission");
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
+
     public static void deleteFile(final String path, final String file) {
         new File(path + File.separator + file).delete();
     }
-    
+
     public static void unzipFile(final String path, final String file, final String destination) {
         try {
             Zipper.extract(Paths.get(path + File.separator + file), Paths.get(destination));
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    
+
     public static String getZigGlobalCacheDirectory(final boolean clear) {
         final String platformTypeName = getPlatformTypeName();
         String dirName = null;
         if (platformTypeName != null && !"".equals(platformTypeName)) {
             if (isLinux()) {
                 dirName = "zig-linux-" + platformTypeName + "-0.9.1";
-            }
-            else if (isMacOS()) {
+            } else if (isMacOS()) {
                 dirName = "zig-macos-" + platformTypeName + "-0.9.1";
-            }
-            else if (isWindows()) {
+            } else if (isWindows()) {
                 dirName = "zig-windows-" + platformTypeName + "-0.9.1";
             }
         }
@@ -141,14 +172,17 @@ public class SetupManager
             final String compilePath = currentDir + File.separator + dirName + File.separator + "zig" + (isWindows() ? ".exe" : "");
             if (Files.exists(Paths.get(compilePath))) {
                 try {
-                    final ProcessHelper.ProcessResult compileRunresult = ProcessHelper.run(Paths.get(currentDir + File.separator + dirName, new String[0]), 160000L, Arrays.asList(compilePath, "env"));
+                    final ProcessHelper.ProcessResult compileRunresult = ProcessHelper.run(
+                            Paths.get(currentDir + File.separator + dirName),
+                            160000L,
+                            Arrays.asList(compilePath, "env"));
                     Gson gson = new Gson();
                     Map<String, String> map = gson.fromJson(compileRunresult.stdout, Map.class);
                     if (clear) {
                         FileUtils.clearDirectory(map.get("global_cache_dir"));
                     }
                     return map.get("global_cache_dir");
-                }catch (Throwable e){
+                } catch (Throwable e) {
                     e.printStackTrace();
                 }
             }
@@ -156,7 +190,7 @@ public class SetupManager
         System.out.println("Failed to get zig temporary file directory");
         return "";
     }
-    
+
     static {
         SetupManager.OS = System.getProperty("os.name").toLowerCase();
     }
