@@ -39,7 +39,9 @@ tasks.withType(JavaCompile) {
 
 shadowJar {
     archiveClassifier.set('')
-    
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    mergeServiceFiles()
+
     relocate "picocli", "cc.nuym.depend.picocli"
     relocate "ch.qos", "cc.nuym.depend.qos"
     relocate "com.ctc", "cc.nuym.depend"
