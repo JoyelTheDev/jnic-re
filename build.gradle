@@ -37,10 +37,17 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
+jar {
+    enabled = false
+}
+
 shadowJar {
     archiveClassifier.set('')
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     mergeServiceFiles()
+
+    manifest {
+        attributes 'Main-Class': 'cc.nuym.jnic.Main'
+    }
 
     relocate "picocli", "cc.nuym.depend.picocli"
     relocate "ch.qos", "cc.nuym.depend.qos"
@@ -54,19 +61,13 @@ shadowJar {
     relocate "lombok", "cn.nuym.depend"
     relocate "Class50", "cn.nuym.depend"
     relocate "com.zwitserloot", "cn.nuym.depend"
-    
+
     exclude 'AUTHORS'
     exclude 'LICENSE'
     exclude 'latestchanges.html'
     exclude 'README.md'
     exclude 'changelog.txt'
     exclude 'release-timestamp.txt'
-}
-
-jar {
-    manifest {
-        attributes 'Main-Class': 'cc.nuym.jnic.Main'
-    }
 }
 
 tasks.build.dependsOn tasks.shadowJar
