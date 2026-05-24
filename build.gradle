@@ -1,7 +1,6 @@
 plugins {
     id 'java'
     id 'maven-publish'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 repositories {
@@ -38,36 +37,13 @@ tasks.withType(JavaCompile) {
 }
 
 jar {
-    enabled = false
-}
-
-shadowJar {
-    archiveClassifier.set('')
-    mergeServiceFiles()
-
     manifest {
         attributes 'Main-Class': 'cc.nuym.jnic.Main'
     }
-
-    relocate "picocli", "cc.nuym.depend.picocli"
-    relocate "ch.qos", "cc.nuym.depend.qos"
-    relocate "com.ctc", "cc.nuym.depend"
-    relocate "com.fasterxml", "cc.nuym.depend"
-    relocate "org.apache", "cc.nuym.depend"
-    relocate "org.simpleframework", "cc.nuym.depend"
-    relocate "com.google", "cc.nuym.depend"
-    relocate "org.codehaus", "cc.nuym.depend"
-    relocate "org.objectweb", "cc.nuym.depend"
-    relocate "lombok", "cn.nuym.depend"
-    relocate "Class50", "cn.nuym.depend"
-    relocate "com.zwitserloot", "cn.nuym.depend"
-
-    exclude 'AUTHORS'
-    exclude 'LICENSE'
-    exclude 'latestchanges.html'
-    exclude 'README.md'
-    exclude 'changelog.txt'
-    exclude 'release-timestamp.txt'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
 }
-
-tasks.build.dependsOn tasks.shadowJar
