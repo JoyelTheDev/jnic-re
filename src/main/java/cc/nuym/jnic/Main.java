@@ -114,6 +114,9 @@ public class Main
                     "\t\t<!--<target>MACOS_AARCH64</target>-->\n" +
                     "\t\t<target>LINUX_X86_64</target>\n" +
                     "\t\t<!--<target>LINUX_AARCH64</target>-->\n" +
+                    "\t\t<!-- Android/Termux targets -->\n" +
+                    "\t\t<!--<target>ANDROID_AARCH64</target>-->\n" +
+                    "\t\t<!--<target>ANDROID_X86_64</target>-->\n" +
                     "\t</targets>\n" +
                     "\t<options>\n" +
                     "\t\t<!--String obfuscation-->\n" +
