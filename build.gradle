@@ -36,8 +36,6 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-// Step 1: compile the loader sources at Java 8 bytecode level so the
-// injected classes work on the widest range of target JVMs.
 task compileLoader(type: JavaCompile) {
     source = fileTree('loader/src/main/java')
     classpath = files()
@@ -47,8 +45,6 @@ task compileLoader(type: JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-// Step 2: zip the compiled loader classes into src/main/resources so
-// the fat-jar task picks them up as /Loader.zip on the classpath.
 task packageLoader(type: Zip, dependsOn: compileLoader) {
     archiveFileName = 'Loader.zip'
     destinationDirectory = file('src/main/resources')
@@ -56,11 +52,9 @@ task packageLoader(type: Zip, dependsOn: compileLoader) {
     include '**/*.class'
 }
 
-// Step 3: ensure Loader.zip exists before the main sources are compiled.
 compileJava.dependsOn packageLoader
+processResources.dependsOn packageLoader  // <-- this line was missing
 
-// Step 4: clean up the generated Loader.zip when running `clean` so
-// it gets regenerated fresh on the next build.
 clean.doLast {
     delete 'src/main/resources/Loader.zip'
 }
