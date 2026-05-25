@@ -504,20 +504,38 @@ public class NativeObfuscator {
                         }
                     }
                     //System.out.println("Compiling:" + target);
-                    String compilePath = System.getProperty("user.dir") + separator + "zig-" + currentOSName + "-" + currentPlatformTypeName + "-0.9.1" + separator + "zig" + (SetupManager.isWindows() ? ".exe" : "");
-                    if (Files.exists(Paths.get(compilePath))) {
-                        ProcessHelper.ProcessResult compileRunresult = ProcessHelper.run(outputDir, 600000L, Arrays.asList(compilePath, "cc", "-O2", "-fno-sanitize=undefined", "-funroll-loops", "-target", platformTypeName + "-" + osName + "-gnu", "-fPIC", "-shared", "-s", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-I." + separator + "cpp", "-o." + separator + "build" + separator + "lib" + separator + libName, "." + separator + "cpp" + separator + "jnic.c"));
-                        //System.out.println(String.format("Compilation time %dms", compileRunresult.execTime));
-                        libNames.add(libName);
-                        compileRunresult.check("zig build");
-                        continue;
-                    }
-                    Path parent = Paths.get(System.getProperty("user.dir")).getParent();
-                    ProcessHelper.ProcessResult compileRunresult = ProcessHelper.run(outputDir, 600000L, Arrays.asList(parent.toFile().getAbsolutePath() + separator + "zig-" + currentOSName + "-" + currentPlatformTypeName + "-0.9.1" + separator + "zig" + (SetupManager.isWindows() ? ".exe" : ""), "cc", "-O2", "-fno-sanitize=undefined", "-funroll-loops", "-target", platformTypeName + "-" + osName + "-gnu", "-fPIC", "-shared", "-s", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-I." + separator + "cpp", "-o." + separator + "build" + separator + "lib" + separator + libName, "." + separator + "cpp" + separator + "jnic.c"));
-                    //System.out.println(String.format("Compilation time %dms", compileRunresult.execTime));
-                    libNames.add(libName);
-                    compileRunresult.check("zig build");
-                }
+                    // Determine clang fallback for Termux
+if (SetupManager.isTermux()) {
+    String clangPath = "clang";
+    String linkerFlags = "-fPIC -shared -s -fvisibility=hidden -fvisibility-inlines-hidden";
+    ProcessHelper.ProcessResult compileRunresult = ProcessHelper.run(
+        outputDir, 600000L,
+        Arrays.asList(
+            clangPath,
+            "-O2", "-funroll-loops",
+            "-fPIC", "-shared", "-s",
+            "-fvisibility=hidden", "-fvisibility-inlines-hidden",
+            "-I." + separator + "cpp",
+            "-o." + separator + "build" + separator + "lib" + separator + libName,
+            "." + separator + "cpp" + separator + "jnic.c"
+        )
+    );
+    libNames.add(libName);
+    compileRunresult.check("clang build");
+    continue;
+}
+
+String compilePath = System.getProperty("user.dir") + separator + "zig-" + currentOSName + "-" + currentPlatformTypeName + "-0.9.1" + separator + "zig" + (SetupManager.isWindows() ? ".exe" : "");
+if (Files.exists(Paths.get(compilePath))) {
+    ProcessHelper.ProcessResult compileRunresult = ProcessHelper.run(outputDir, 600000L, Arrays.asList(compilePath, "cc", "-O2", "-fno-sanitize=undefined", "-funroll-loops", "-target", platformTypeName + "-" + osName + "-gnu", "-fPIC", "-shared", "-s", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-I." + separator + "cpp", "-o." + separator + "build" + separator + "lib" + separator + libName, "." + separator + "cpp" + separator + "jnic.c"));
+    libNames.add(libName);
+    compileRunresult.check("zig build");
+    continue;
+}
+Path parent = Paths.get(System.getProperty("user.dir")).getParent();
+ProcessHelper.ProcessResult compileRunresult = ProcessHelper.run(outputDir, 600000L, Arrays.asList(parent.toFile().getAbsolutePath() + separator + "zig-" + currentOSName + "-" + currentPlatformTypeName + "-0.9.1" + separator + "zig" + (SetupManager.isWindows() ? ".exe" : ""), "cc", "-O2", "-fno-sanitize=undefined", "-funroll-loops", "-target", platformTypeName + "-" + osName + "-gnu", "-fPIC", "-shared", "-s", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-I." + separator + "cpp", "-o." + separator + "build" + separator + "lib" + separator + libName, "." + separator + "cpp" + separator + "jnic.c"));
+libNames.add(libName);
+compileRunresult.check("zig build");
                 System.out.println("Compress native libraries");
                 Enter(outputDir);
                 DataTool.compress(outputDir + separator + "build" + separator + "lib", outputDir + separator + "data.dat", Integer.getInteger("level", 1));
