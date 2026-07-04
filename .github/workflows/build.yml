@@ -35,7 +35,7 @@ jobs:
       # Build with Gradle
       # -----------------------------
       - name: Build with Gradle
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build
 
       # -----------------------------
       # Get build number and rename JARs
