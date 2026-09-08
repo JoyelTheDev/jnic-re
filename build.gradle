@@ -15,16 +15,16 @@ version = '3.6.1'
 description = 'Jnic'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 dependencies {
-    implementation 'org.ow2.asm:asm-commons:9.4'
-    implementation 'org.ow2.asm:asm-tree:9.4'
-    implementation 'org.apache.commons:commons-compress:1.22'
-    implementation 'com.google.code.gson:gson:2.10'
-    implementation 'info.picocli:picocli:4.7.1'
+    implementation 'org.ow2.asm:asm-commons:9.8'
+    implementation 'org.ow2.asm:asm-tree:9.8'
+    implementation 'org.apache.commons:commons-compress:1.27.1'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'info.picocli:picocli:4.7.6'
     implementation("org.simpleframework:simple-xml:2.7.1") {
         exclude group: 'xpp3'
         exclude group: 'stax'

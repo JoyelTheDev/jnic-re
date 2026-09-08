@@ -13,33 +13,21 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      # -----------------------------
-      # Checkout
-      # -----------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # -----------------------------
-      # Java
-      # -----------------------------
-      - name: Setup JDK 21
+      - name: Setup JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'temurin'
           cache: gradle
 
-      # -----------------------------
-      # Build with Gradle
-      # -----------------------------
       - name: Build with Gradle
         run: chmod +x gradlew && ./gradlew build
 
-      # -----------------------------
-      # Get build number and rename JARs
-      # -----------------------------
       - name: Get build number and rename JARs
         id: build_number
         run: |
@@ -72,9 +60,6 @@ jobs:
           # Trim leading space and store newline-separated for the release step
           echo "JAR_FILES=$(echo $RENAMED | tr ' ' '\n' | tr '\n' ',' | sed 's/,$//')" >> "$GITHUB_ENV"
 
-      # -----------------------------
-      # Generate changelog (since last tag)
-      # -----------------------------
       - name: Generate changelog
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
@@ -89,9 +74,6 @@ jobs:
             git log $LAST_TAG..HEAD --pretty=format:"- %s (%h)" >> CHANGELOG.md
           fi
 
-      # -----------------------------
-      # GitHub Release
-      # -----------------------------
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
