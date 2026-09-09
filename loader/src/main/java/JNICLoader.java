@@ -35,7 +35,6 @@ public class JNICLoader {
                 break;
             }
         }
-        // Android detection (Termux or on-device)
         boolean isAndroid = new java.io.File("/system/build.prop").exists()
                 || (System.getenv("PREFIX") != null && System.getenv("PREFIX").contains("com.termux"))
                 || osname.contains("android")

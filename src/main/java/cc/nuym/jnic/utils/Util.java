@@ -1,5 +1,5 @@
-// rebuild
 package cc.nuym.jnic.utils;
+
 import cc.nuym.jnic.NativeObfuscator;
 import org.objectweb.asm.Opcodes;
 
@@ -28,14 +28,14 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class Util {
-    private static final Map<Integer, String> OPCODE_NAME_MAP = new HashMap<Integer, String>();
+    private static final Map<Integer, String> OPCODE_NAME_MAP = new HashMap<>();
 
     public static boolean getFlag(int value, int flag) {
         return (value & flag) > 0;
     }
 
-    public static Map<String, String> createMap(Object ... parts) {
-        HashMap<String, String> tokens = new HashMap<String, String>();
+    public static Map<String, String> createMap(Object... parts) {
+        HashMap<String, String> tokens = new HashMap<>();
         for (int i = 0; i < parts.length; i += 2) {
             tokens.put(parts[i].toString(), parts[i + 1].toString());
         }
@@ -45,7 +45,7 @@ public class Util {
     private static String replaceTokens(String string, Map<String, String> tokens, String patternString) {
         Pattern pattern = Pattern.compile(patternString);
         Matcher matcher = pattern.matcher(string);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
             matcher.appendReplacement(sb, Matcher.quoteReplacement(tokens.get(matcher.group(1))));
         }
@@ -72,16 +72,15 @@ public class Util {
     }
 
     public static String readResource(String filePath) {
-        try (InputStream in = NativeObfuscator.class.getClassLoader().getResourceAsStream(filePath);){
+        try (InputStream in = NativeObfuscator.class.getClassLoader().getResourceAsStream(filePath)) {
             return Util.writeStreamToString(in);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     public static void copyResource(String from, Path to) throws IOException {
-        try (InputStream in = NativeObfuscator.class.getClassLoader().getResourceAsStream(from);){
+        try (InputStream in = NativeObfuscator.class.getClassLoader().getResourceAsStream(from)) {
             Objects.requireNonNull(in, "Can't copy resource " + from);
             Files.copy(in, to.resolve(Paths.get(from).getFileName()), StandardCopyOption.REPLACE_EXISTING);
         }
@@ -90,23 +89,21 @@ public class Util {
     private static String writeStreamToString(InputStream stream) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            Util.transfer(stream, baos);
-            return new String(baos.toByteArray(), StandardCharsets.UTF_8);
-        }
-        catch (IOException e) {
+            stream.transferTo(baos);
+            return baos.toString(StandardCharsets.UTF_8);
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     public static void writeEntry(JarFile f, ZipOutputStream out, JarEntry e) throws IOException {
         out.putNextEntry(new JarEntry(e.getName()));
-        try (InputStream in = f.getInputStream(e);){
-            Util.transfer(in, out);
+        try (InputStream in = f.getInputStream(e)) {
+            in.transferTo(out);
         }
         out.closeEntry();
     }
 
-    //TODO: 实现紫水晶class转folder
     public static void class2folder(JarFile f, ZipOutputStream zipOutput, JarEntry entry) throws IOException {
         if (entry.getName().endsWith(".class")) {
             ZipEntry newEntry = new ZipEntry(entry.getName().replace(".class", ".class/"));
@@ -127,23 +124,18 @@ public class Util {
     }
 
     public static void transfer(InputStream in, OutputStream out) throws IOException {
-        byte[] buffer = new byte[4096];
-        int r = in.read(buffer, 0, 4096);
-        while (r != -1) {
-            out.write(buffer, 0, r);
-            r = in.read(buffer, 0, 4096);
-        }
+        in.transferTo(out);
     }
 
     public static String escapeCppNameString(String value) {
         Matcher m = Pattern.compile("([^a-zA-Z_0-9])").matcher(value);
-        StringBuffer sb = new StringBuffer(value.length());
+        StringBuilder sb = new StringBuilder(value.length());
         while (m.find()) {
             m.appendReplacement(sb, String.format("u%d", m.group(1).charAt(0)));
         }
         m.appendTail(sb);
         String output = sb.toString();
-        if (output.length() > 0 && output.charAt(0) >= '0' && output.charAt(0) <= '9') {
+        if (!output.isEmpty() && output.charAt(0) >= '0' && output.charAt(0) <= '9') {
             output = "_" + output;
         }
         return output;
@@ -182,11 +174,9 @@ public class Util {
     public static String getOpcodesString(int value, String prefix) {
         for (Field f : Opcodes.class.getFields()) {
             try {
-                if (!f.getName().startsWith(prefix) || (Integer)f.get(null) != value) continue;
+                if (!f.getName().startsWith(prefix) || (Integer) f.get(null) != value) continue;
                 return f.getName().substring(prefix.length());
-            }
-            catch (ReflectiveOperationException reflectiveOperationException) {
-                // empty catch block
+            } catch (ReflectiveOperationException reflectiveOperationException) {
             }
         }
         return null;
@@ -197,7 +187,7 @@ public class Util {
     }
 
     private static boolean isValidJavaIdentifier(String className) {
-        if (className.length() == 0 || !Character.isJavaIdentifierStart(className.charAt(0))) {
+        if (className.isEmpty() || !Character.isJavaIdentifierStart(className.charAt(0))) {
             return false;
         }
         String name = className.substring(1);
@@ -219,8 +209,7 @@ public class Util {
                 if (!fullName.endsWith(".")) {
                     int index = fullName.indexOf(".");
                     if (index != -1) {
-                        String[] str;
-                        for (String name : str = fullName.split("\\.")) {
+                        for (String name : fullName.split("\\.")) {
                             if (!name.equals("")) {
                                 if (Util.isValidJavaIdentifier(name)) continue;
                             }
@@ -235,8 +224,7 @@ public class Util {
                     break block9;
                 }
                 flag = false;
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 flag = false;
                 ex.printStackTrace();
             }

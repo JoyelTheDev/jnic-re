@@ -1,4 +1,3 @@
-// rebuild
 package cc.nuym.jnic.instructions;
 
 import cc.nuym.jnic.utils.MethodContext;
@@ -12,14 +11,11 @@ import org.objectweb.asm.tree.LabelNode;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-public class FrameHandler
-        implements InstructionTypeHandler<FrameNode> {
+public class FrameHandler implements InstructionTypeHandler<FrameNode> {
     @Override
     public void accept(MethodContext context, FrameNode node) {
         Consumer<Object> appendLocal = local -> {
-            if (local instanceof String) {
-                context.locals.add(MethodProcessor.TYPE_TO_STACK[Type.OBJECT]);
-            } else if (local instanceof LabelNode) {
+            if (local instanceof String || local instanceof LabelNode) {
                 context.locals.add(MethodProcessor.TYPE_TO_STACK[Type.OBJECT]);
             } else {
                 context.locals.add(MethodProcessor.STACK_TO_STACK[(int) local]);
@@ -27,9 +23,7 @@ public class FrameHandler
         };
 
         Consumer<Object> appendStack = stack -> {
-            if (stack instanceof String) {
-                context.stack.add(MethodProcessor.TYPE_TO_STACK[Type.OBJECT]);
-            } else if (stack instanceof LabelNode) {
+            if (stack instanceof String || stack instanceof LabelNode) {
                 context.stack.add(MethodProcessor.TYPE_TO_STACK[Type.OBJECT]);
             } else {
                 context.stack.add(MethodProcessor.STACK_TO_STACK[(int) stack]);
@@ -37,32 +31,25 @@ public class FrameHandler
         };
 
         switch (node.type) {
-            case Opcodes.F_APPEND:
+            case Opcodes.F_APPEND -> {
                 node.local.forEach(appendLocal);
                 context.stack.clear();
-                break;
-
-            case Opcodes.F_CHOP:
+            }
+            case Opcodes.F_CHOP -> {
                 node.local.forEach(item -> context.locals.remove(context.locals.size() - 1));
                 context.stack.clear();
-                break;
-
-            case Opcodes.F_NEW:
-            case Opcodes.F_FULL:
+            }
+            case Opcodes.F_NEW, Opcodes.F_FULL -> {
                 context.locals.clear();
                 context.stack.clear();
                 node.local.forEach(appendLocal);
                 node.stack.forEach(appendStack);
-                break;
-
-            case Opcodes.F_SAME:
-                context.stack.clear();
-                break;
-
-            case Opcodes.F_SAME1:
+            }
+            case Opcodes.F_SAME -> context.stack.clear();
+            case Opcodes.F_SAME1 -> {
                 context.stack.clear();
                 appendStack.accept(node.stack.get(0));
-                break;
+            }
         }
     }
 
@@ -75,19 +62,19 @@ public class FrameHandler
 
     @Override
     public int getNewStackPointer(FrameNode node, int currentStackPointer) {
-        switch (node.type) {
-            case Opcodes.F_APPEND:
-            case Opcodes.F_SAME:
-            case Opcodes.F_CHOP:
-                return 0;
-            case Opcodes.F_NEW:
-            case Opcodes.F_FULL:
-                return node.stack.stream().mapToInt(argument -> Math.max(1, argument instanceof Integer ?
-                        MethodProcessor.STACK_TO_STACK[(int) argument] : MethodProcessor.TYPE_TO_STACK[Type.OBJECT])).sum();
-            case Opcodes.F_SAME1:
-                return node.stack.stream().limit(1).mapToInt(argument -> Math.max(1, argument instanceof Integer ?
-                        MethodProcessor.STACK_TO_STACK[(int) argument] : MethodProcessor.TYPE_TO_STACK[Type.OBJECT])).sum();
-        }
-        throw new RuntimeException();
+        return switch (node.type) {
+            case Opcodes.F_APPEND, Opcodes.F_SAME, Opcodes.F_CHOP -> 0;
+            case Opcodes.F_NEW, Opcodes.F_FULL -> node.stack.stream()
+                    .mapToInt(argument -> Math.max(1, argument instanceof Integer
+                            ? MethodProcessor.STACK_TO_STACK[(int) argument]
+                            : MethodProcessor.TYPE_TO_STACK[Type.OBJECT]))
+                    .sum();
+            case Opcodes.F_SAME1 -> node.stack.stream().limit(1)
+                    .mapToInt(argument -> Math.max(1, argument instanceof Integer
+                            ? MethodProcessor.STACK_TO_STACK[(int) argument]
+                            : MethodProcessor.TYPE_TO_STACK[Type.OBJECT]))
+                    .sum();
+            default -> throw new RuntimeException();
+        };
     }
 }

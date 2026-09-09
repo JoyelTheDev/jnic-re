@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
@@ -21,7 +20,6 @@ public class SetupManager {
     private static String OS;
 
     public static void init() {
-        // Termux/Android: skip Zig download, use system clang
         if (isTermux()) {
             System.out.println("Termux/Android detected. Using system clang for compilation.");
             System.out.println("Make sure clang is installed: pkg install clang");
@@ -49,29 +47,13 @@ public class SetupManager {
     }
 
     private static String getPlatformTypeName() {
-        final String lowerCase;
-        final String platform = lowerCase = System.getProperty("os.arch").toLowerCase();
-        String platformTypeName = null;
-        switch (lowerCase) {
-            case "x86_64":
-            case "amd64": {
-                platformTypeName = "x86_64";
-                break;
-            }
-            case "aarch64": {
-                platformTypeName = "aarch64";
-                break;
-            }
-            case "x86": {
-                platformTypeName = "i386";
-                break;
-            }
-            default: {
-                platformTypeName = "";
-                break;
-            }
-        }
-        return platformTypeName;
+        final String lowerCase = System.getProperty("os.arch").toLowerCase();
+        return switch (lowerCase) {
+            case "x86_64", "amd64" -> "x86_64";
+            case "aarch64" -> "aarch64";
+            case "x86" -> "i386";
+            default -> "";
+        };
     }
 
     public static boolean isLinux() {
@@ -86,11 +68,6 @@ public class SetupManager {
         return SetupManager.OS.contains("windows");
     }
 
-    /**
-     * Detects Termux environment on Android.
-     * Termux sets PREFIX=/data/data/com.termux/files/usr
-     * and java.io.tmpdir points into Termux's data directory.
-     */
     public static boolean isTermux() {
         String prefix = System.getenv("PREFIX");
         if (prefix != null && prefix.contains("com.termux")) {
@@ -100,17 +77,9 @@ public class SetupManager {
         if (tmpDir.contains("com.termux")) {
             return true;
         }
-        // Android detection fallback
-        if (new File("/system/build.prop").exists()) {
-            return true;
-        }
-        return false;
+        return new File("/system/build.prop").exists();
     }
 
-    /**
-     * Returns the system clang path on Termux.
-     * Termux installs clang to $PREFIX/bin/clang
-     */
     public static String getTermuxClangPath() {
         String prefix = System.getenv("PREFIX");
         if (prefix == null) prefix = "/data/data/com.termux/files/usr";

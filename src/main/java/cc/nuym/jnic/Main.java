@@ -4,7 +4,6 @@ import cc.nuym.jnic.env.SetupManager;
 import cc.nuym.jnic.utils.DecryptorClass;
 import cc.nuym.jnic.utils.TamperUtils;
 import cc.nuym.jnic.xml.Config;
-import org.apache.commons.compress.utils.IOUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -31,12 +30,9 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-public class Main
-{
+public class Main {
     private File inputFile;
     static File output;
-
-
 
     public static void main(final String[] args) {
         System.out.println("\n");
@@ -48,17 +44,15 @@ public class Main
         System.exit(new CommandLine(new NativeObfuscatorRunner()).setCaseInsensitiveEnumValuesAllowed(true).execute(args));
     }
 
-    @CommandLine.Command(name = "Jnic", mixinStandardHelpOptions = true, version = { "Jnic Bytecode Translator" }, description = { "将.jar文件翻译成.c文件并生成输出.jar文件" })
-    private static class NativeObfuscatorRunner implements Callable<Integer>
-    {
+    @CommandLine.Command(name = "Jnic", mixinStandardHelpOptions = true, version = {"Jnic Bytecode Translator"}, description = {"将.jar文件翻译成.c文件并生成输出.jar文件"})
+    private static class NativeObfuscatorRunner implements Callable<Integer> {
         @CommandLine.Parameters(index = "0", description = "Jar file to transpile")
         private File jarFile;
 
         @CommandLine.Parameters(index = "1", description = "Output directory")
         private String outputDirectory;
 
-        @CommandLine.Option(names = {"-c", "--config"}, defaultValue = "config.xml",
-                description = "Config file")
+        @CommandLine.Option(names = {"-c", "--config"}, defaultValue = "config.xml", description = "Config file")
         private File config;
 
         @CommandLine.Option(names = {"-l", "--libraries"}, description = "Directory for dependent libraries")
@@ -66,7 +60,8 @@ public class Main
 
         @CommandLine.Option(names = {"-a", "--annotations"}, description = "Use annotations to ignore/include native obfuscation")
         private boolean useAnnotations;
-        @CommandLine.Option(names = { "--plain-lib-name" }, description = { "Common library name to be used for the loader" })
+
+        @CommandLine.Option(names = {"--plain-lib-name"}, description = {"Common library name to be used for the loader"})
         private String libraryName;
 
         @Override
@@ -85,9 +80,11 @@ public class Main
                 }
                 Serializer serializer = new Persister();
                 Config configInfo = serializer.read(Config.class, stringBuilder.toString());
-                final List<Path> libs = new ArrayList<Path>();
+                final List<Path> libs = new ArrayList<>();
                 if (this.librariesDirectory != null) {
-                    Files.walk(this.librariesDirectory.toPath(), FileVisitOption.FOLLOW_LINKS).filter(f -> f.toString().endsWith(".jar") || f.toString().endsWith(".zip")).forEach(libs::add);
+                    Files.walk(this.librariesDirectory.toPath(), FileVisitOption.FOLLOW_LINKS)
+                            .filter(f -> f.toString().endsWith(".jar") || f.toString().endsWith(".zip"))
+                            .forEach(libs::add);
                 }
                 if (new File(this.outputDirectory).isDirectory()) {
                     final File outFile = new File(this.outputDirectory, this.jarFile.getName());
@@ -100,12 +97,11 @@ public class Main
                         outFile.renameTo(new File(this.outputDirectory + ".BACKUP"));
                     }
                 }
-                //开始处理
                 new NativeObfuscator().process(this.jarFile.toPath(), Paths.get(this.outputDirectory), configInfo, libs, this.libraryName, this.useAnnotations);
                 return 0;
             }
 
-            final Path path = Files.createFile(this.config.toPath(), (FileAttribute<?>[])new FileAttribute[0]);
+            final Path path = Files.createFile(this.config.toPath(), (FileAttribute<?>[]) new FileAttribute[0]);
             stringBuilder.append("<jnic>\n" +
                     "\t<targets>\n" +
                     "\t\t<target>WINDOWS_X86_64</target>\n" +

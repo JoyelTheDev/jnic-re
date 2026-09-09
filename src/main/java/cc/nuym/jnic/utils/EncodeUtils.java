@@ -1,58 +1,49 @@
 package cc.nuym.jnic.utils;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 
-public class EncodeUtils
-{
+public class EncodeUtils {
     public static final String UTF_8 = "UTF-8";
     private static final char[] BASE62;
-    
+
     public static String encodeHex(final byte[] input) {
         return HexUtil.encodeToString(input);
     }
-    
+
     public static byte[] decodeHex(final String input) {
         return HexUtil.decode(input.getBytes(StandardCharsets.UTF_8));
     }
-    
+
     public static String encodeBase64(final byte[] input) {
         return Base64Util.encrypt(input);
     }
-    
+
     public static String encodeBase64(final String input) {
         if (StringUtils.isBlank(input)) {
             return "";
         }
-        try {
-            return Base64Util.encrypt(input.getBytes("UTF-8"));
-        }
-        catch (UnsupportedEncodingException e) {
-            return "";
-        }
+        return Base64Util.encrypt(input.getBytes(StandardCharsets.UTF_8));
     }
-    
+
     public static byte[] decodeBase64(final String input) {
         try {
             return Base64Util.decrypt(input);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
-    
+
     public static String decodeBase64String(final String input) {
         if (StringUtils.isBlank(input)) {
             return "";
         }
         try {
-            return new String(Base64Util.decrypt(input), "UTF-8");
-        }
-        catch (Exception e) {
+            return new String(Base64Util.decrypt(input), StandardCharsets.UTF_8);
+        } catch (Exception e) {
             return "";
         }
     }
-    
+
     public static String encodeBase62(final byte[] input) {
         final char[] chars = new char[input.length];
         for (int i = 0; i < input.length; ++i) {
@@ -60,7 +51,7 @@ public class EncodeUtils
         }
         return new String(chars);
     }
-    
+
     static {
         BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray();
     }
